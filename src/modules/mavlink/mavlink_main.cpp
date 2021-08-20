@@ -2168,6 +2168,12 @@ Mavlink::task_main(int argc, char *argv[])
 	if (!set_instance_id()) {
 		PX4_ERR("no instances available");
 		return PX4_ERROR;
+
+	} else {
+		// set thread name
+		char thread_name[13];
+		snprintf(thread_name, sizeof(thread_name), "mavlink_if%d", get_instance_id());
+		px4_prctl(PR_SET_NAME, thread_name, px4_getpid());
 	}
 
 	set_channel();
@@ -2813,14 +2819,12 @@ Mavlink::start(int argc, char *argv[])
 	}
 
 	// Instantiate thread
-	char buf[24];
-	sprintf(buf, "mavlink_if%d", ic);
 
 	// This is where the control flow splits
 	// between the starting task and the spawned
 	// task - start_helper() only returns
 	// when the started task exits.
-	px4_task_spawn_cmd(buf,
+	px4_task_spawn_cmd("mavlink_main",
 			   SCHED_DEFAULT,
 			   SCHED_PRIORITY_DEFAULT,
 			   2896 + MAVLINK_NET_ADDED_STACK,
