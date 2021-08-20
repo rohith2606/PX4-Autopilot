@@ -60,6 +60,52 @@ void watchdog_pet(void)
 }
 
 /****************************************************************************
+ * Name: watchdog_init_ex()
+ *
+ * Description:
+ *   This function initialize the Independent watchdog (IWDG)
+ *
+ *
+ * Input Parameters:
+ *   prescale - 0 - 7.
+ *   reload   - 0 - 0xfff.
+ *
+ * Returned value:
+ *   none.
+ *
+ ****************************************************************************/
+
+void watchdog_init_ex(int prescale, int reload)
+{
+
+#if defined(CONFIG_STM32_JTAG_FULL_ENABLE) || \
+    defined(CONFIG_STM32_JTAG_NOJNTRST_ENABLE) || \
+    defined(CONFIG_STM32_JTAG_SW_ENABLE)
+	putreg32(getreg32(STM32_DBGMCU_CR) | DBGMCU_CR_IWDGSTOP, STM32_DBGMCU_CR);
+#endif
+
+	/* unlock */
+
+	putreg32(IWDG_KR_KEY_ENABLE, STM32_IWDG_KR);
+
+	/* Set the prescale value */
+
+	putreg32((prescale << IWDG_PR_SHIFT) & IWDG_PR_MASK, STM32_IWDG_PR);
+
+	/* Set the reload value */
+
+	putreg32((reload << IWDG_RLR_RL_SHIFT) &  IWDG_RLR_RL_MASK, STM32_IWDG_RLR);
+
+	/* Start the watch dog */
+
+	putreg32(IWDG_KR_KEY_START, STM32_IWDG_KR);
+
+	watchdog_pet();
+
+}
+
+
+/****************************************************************************
  * Name: watchdog_init()
  *
  * Description:
@@ -74,29 +120,8 @@ void watchdog_pet(void)
  *
  ****************************************************************************/
 
+
 void watchdog_init(void)
 {
-#if defined(CONFIG_STM32_JTAG_FULL_ENABLE) || \
-    defined(CONFIG_STM32_JTAG_NOJNTRST_ENABLE) || \
-    defined(CONFIG_STM32_JTAG_SW_ENABLE)
-	//putreg32(getreg32(STM32_DBGMCU_APB1_FZ) | DBGMCU_APB1_IWDGSTOP, STM32_DBGMCU_APB1_FZ);
-#endif
-
-	/* unlock */
-
-	putreg32(IWDG_KR_KEY_ENABLE, STM32_IWDG_KR);
-
-	/* Set the prescale value */
-
-	putreg32(IWDG_PR_DIV16, STM32_IWDG_PR);
-
-	/* Set the reload value */
-
-	putreg32(IWDG_RLR_MAX, STM32_IWDG_RLR);
-
-	/* Start the watch dog */
-
-	putreg32(IWDG_KR_KEY_START, STM32_IWDG_KR);
-
-	watchdog_pet();
+	watchdog_init_ex(IWDG_PR_DIV16 >> IWDG_PR_SHIFT, IWDG_RLR_MAX >> IWDG_RLR_RL_SHIFT);
 }
