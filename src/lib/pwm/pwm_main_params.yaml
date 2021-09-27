@@ -1,4 +1,4 @@
-__max_num_config_instances: &max_num_config_instances 14
+__max_num_config_instances: &max_num_config_instances 16
 
 module_name: pwm_out
 
